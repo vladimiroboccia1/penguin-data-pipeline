@@ -1,0 +1,24 @@
+[project]
+name = "penguin-pipeline"
+version = "0.1.0"
+description = "Pipeline that turns the Palmer Penguins CSV into model-ready NumPy arrays."
+readme = "README.md"
+authors = [
+    { name = "vladimiro.boccia1" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "numpy>=2.5.5",
+    "pandas>=3.1.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.8,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.4.0",
+    "matplotlib>=3.11.2",
+    "pytest>=9.2.0",
+]
