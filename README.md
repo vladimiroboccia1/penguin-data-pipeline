@@ -1,50 +1,56 @@
 # Penguin Data Pipeline
 
-A reusable Python pipeline that turns the raw Palmer Penguins dataset into model-ready NumPy arrays.
+A small, tested Python package that turns the raw Palmer Penguins CSV into model-ready NumPy arrays, from the command line or as a library.
 
 ## What it does
 
-1. **Load** the CSV into a pandas DataFrame
-2. **Build features**: drop incomplete rows, one-hot encode `island` and `sex`, map species to labels 0, 1, 2
-3. **Split** into a training set (80%) and a test set (20%), randomly and reproducibly
-4. **Standardize** every feature using the mean and standard deviation of the training set only
+1. **Load** the CSV into a pandas DataFrame (344 rows).
+2. **Drop incomplete rows**: any penguin with a missing measurement or a missing `sex` is removed (333 rows remain).
+3. **One-hot encode** `island` and `sex`, and map the species to the labels 0, 1, 2 (Adelie, Chinstrap, Gentoo).
+4. **Split** into a training set and a test set (80% / 20% by default), shuffled with a fixed seed so the split is reproducible.
+5. **Standardize** every feature using the mean and standard deviation of the training set only.
+6. **Save** all the arrays in a single `.npz` file.
 
-## Result
+## Installation
 
-| Array | Shape |
-| --- | --- |
-| `X_train` | (266, 9) |
-| `X_test` | (67, 9) |
-| `y_train` | (266,) |
-| `y_test` | (67,) |
-
-## How to run
+You need [uv](https://docs.astral.sh/uv/) and Git.
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-Tested with Python 3.14.
+git clone https://github.com/vladimiroboccia1/penguin-data-pipeline.git
+cd penguin-data-pipeline
+uv sync
 ```
 
-Then open `demo.ipynb` and run all cells.
+`uv sync` creates the virtual environment and installs the exact versions recorded in `uv.lock`.
 
-## Project structure
+Tested with Python 3.14.
 
-- `penguin_pipeline.py`: the pipeline functions
-- `demo.ipynb`: example usage and plots
-- `penguins.csv`: the dataset
+## Command line
 
-## Design choices
+```bash
+uv run penguin-pipeline penguins.csv
+```
 
-- Why one-hot encoding for `island` and `sex`: models only work with numbers, but mapping the islands to 0, 1, 2 would invent an order and a distance between them (Dream would sit "between" Biscoe and Torgersen). One-hot encoding gives each category its own 0/1 column, so no false relationship is introduced.
-- Why mean and standard deviation come from the training set only: the test set must behave like completely new data. Computing these statistics on all the data would leak information from the test set into training (data leakage) and make the evaluation look better than it really is. In production, new data is scaled with the statistics saved from training.
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `--output` | `penguins_data.npz` | where to save the arrays |
+| `--train-ratio` | `0.8` | share of examples in the training set |
+| `--seed` | `42` | random seed for the split |
+| `--verbose` | off | also show debug messages |
+| `--quiet` | off | only show warnings and errors |
 
-## Data
+Example output:
 
-Palmer Archipelago (Antarctica) penguin data, collected by Dr. Kristen Gorman and the Palmer Station LTER, available under a CC-0 license.
-Horst AM, Hill AP, Gorman KB (2020). palmerpenguins: Palmer Archipelago (Antarctica) penguin data. doi:10.5281/zenodo.3960218
+```
+2026-11-18 16:06:16,203 INFO penguin_pipeline.cli: Loading penguins.csv
+2026-11-18 16:06:16,204 INFO penguin_pipeline.cli: Features ready: X (333, 9), y (333,)
+2026-11-18 16:06:16,205 INFO penguin_pipeline.cli: Split with seed 42: train (266, 9), test (67, 9)
+2026-11-18 16:06:16,205 INFO penguin_pipeline.cli: Saved to penguins_data.npz
+```
 
-## Next steps
+The output file contains six named arrays:
 
-Train a classifier on these arrays.
+| Array | Shape | Content |
+| --- | --- | --- |
+| `X_train` | (266, 9) | standardized training features |
+|

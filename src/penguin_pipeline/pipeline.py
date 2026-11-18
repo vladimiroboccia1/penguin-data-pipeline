@@ -1,7 +1,10 @@
 """Data pipeline that turns the Palmer Penguins CSV into model-ready NumPy arrays."""
+import logging
 
 import numpy as np
 import pandas as pd
+
+logger = logging.getLogger(__name__)    # Tramite __name__ Python riempie il campo con il nome del logger
 
 # Numeric measurements used as features
 FEATURES = ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"]
@@ -20,7 +23,9 @@ def build_features(df: pd.DataFrame):
     Drops rows with missing measurements or sex, one-hot encodes island and sex,
     and maps species to labels 0, 1, 2. Returns X (2D array) and y (1D array).
     """
+    n_before = len(df)  # How many rows there were before
     df_model = df.dropna(subset=FEATURES + ["sex"])
+    logger.debug("Dropped %d incomplete rows out of %d", n_before - len(df_model), n_before)  # %d and %s are placeholders: %d becomes an integer, and %s becomes any value as text. They are populated with the arguments that follow, in order. In logs, they are used instead of f-strings by convention: the string is only constructed if the message will actually be displayed.
     island_onehot = pd.get_dummies(df_model["island"], prefix="island", dtype=int)
     sex_onehot = pd.get_dummies(df_model["sex"], prefix="sex", dtype=int)
     # Rows are aligned by index label, so each penguin keeps its own values
@@ -42,6 +47,7 @@ def split_data(X: np.ndarray, y: np.ndarray, train_ratio: float = 0.8, seed: int
     train_idx = indices[:n_train]
     test_idx = indices[n_train:]
     # Same indices for X and y, so features and labels stay paired
+    logger.debug("Split %d examples: %d for training, %d for testing", len(X), len(train_idx), len(test_idx))
     return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
 
 

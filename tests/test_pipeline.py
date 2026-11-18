@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from penguin_pipeline import build_features, split_data
+from penguin_pipeline import build_features, split_data, LABELS, standardize
 
 
 def make_df() -> pd.DataFrame:
@@ -62,4 +62,33 @@ def test_split_no_loss():
     y = np.arange(10)
     _, _, y_train, y_test = split_data(X,y)
     assert sorted(list(y_train) + list(y_test)) == list(range(10))
+
+
+# Due strumenti nuovi: 
+# 1. np.allclose(a,b) da True se a e b sono uguali, a meno di minuscoli errori di arrotondamento. Funziona con numeri singoli e con array
+# 2. np.isnan(X).any(): np.isnan è una maschera e da True dove c'è un valore mancante; any da True se almeno un elemento della maschera è True
+
+def test_standardize_train_mean():
+    X_train = np.array([[1.0, 10.0], [3.0, 30.0], [5.0, 50.0]])
+    X_test = np.array([[2.0, 20.0]])
+    X_train_scaled, X_test_scaled, mu, std = standardize(X_train, X_test)
+    assert np.allclose(X_train_scaled.mean(axis=0), 0.0)
+    assert np.allclose(X_train_scaled.std(axis=0), 1.0)
+
+
+def test_standardize_uses_train_stats(): 
+    X_train = np.array([[1.0, 10.0], [3.0, 30.0], [5.0, 50.0]])
+    X_test = np.array([[2.0, 20.0]])
+    _,X_test_scaled,mu,std = standardize(X_train, X_test)
+    assert np.allclose(mu, [3.0, 30.0])
+    assert np.allclose(X_test_scaled, (X_test - mu)/std)
+
+
+def test_no_nan(): 
+    X,y = build_features(make_df())
+    assert not np.isnan(X).any()
+
+
+def test_labels_contract():
+    assert sorted(LABELS.values()) == [0,1,2]
 
